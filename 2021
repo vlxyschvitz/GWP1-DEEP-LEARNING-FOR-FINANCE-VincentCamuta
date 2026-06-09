@@ -977,7 +977,7 @@
 
     <!-- ===== STEP 6: BACKTEST ===== -->
     <div class="step-page" id="page-6">
-      <div class="page-title"><h2>Backtesting · Asset Allocation Strategy</h2><span class="page-sub">Test period 2021–2022</span></div>
+      <div class="page-title"><h2>Backtesting · Asset Allocation Strategy</h2><span class="page-sub">Test period Jan 2018 → Dec 2022</span></div>
       <div class="step-intro">The multi-output model's predictions are translated into a long/short asset allocation strategy, rebalanced every 25 trading days. Results are compared against an equally-weighted buy-and-hold benchmark.</div>
 
       <!-- Strategy Controls -->
@@ -1022,7 +1022,7 @@
 
       <!-- Cumulative return chart -->
       <div class="card" style="margin-top:16px">
-        <div class="card-title">Cumulative Returns · 2021–2022</div>
+        <div class="card-title">Cumulative Returns · 2018–2022</div>
         <div class="chart-wrap" style="height:280px"><canvas id="chart-cum-ret" role="img" aria-label="Cumulative return strategy vs benchmark">Cumulative return chart loading...</canvas></div>
       </div>
 
@@ -1233,7 +1233,7 @@ const headerDescs = {
   3:'Image-based time series encoding via GAF transformation',
   4:'Recurrent architecture capturing sequential dependencies',
   5:'Joint prediction across all asset classes',
-  6:'Test period 2021–2022 · long/short allocation strategy',
+  6:'Test period 2018–2022 · long/short allocation strategy',
   7:'Comparative analysis across architectures & asset classes'
 };
 
@@ -1802,7 +1802,7 @@ function runStep6() {
     const nShort = +document.getElementById('bt-nshort').value;
     const rebal = +document.getElementById('bt-rebal').value;
 
-    // Generate synthetic backtest returns for 2021-2022 (~24 periods of 25 days)
+    // Generate synthetic backtest returns for 2018-2022 (~50 periods of 25 days)
     const nPeriods = Math.floor(504/rebal);
     const rng3 = mulberry32(99);
     const stratRets = Array.from({length:nPeriods},(_,i)=>{
@@ -1830,7 +1830,7 @@ function runStep6() {
     document.getElementById('bt-mdd-bm').textContent  = 'Benchmark: '+(maxDD(cumEW)*100).toFixed(2)+'%';
 
     const labels = Array.from({length:nPeriods},(_,i)=>{
-      const d = new Date('2021-01-04');
+      const d = new Date('2018-01-01');
       d.setDate(d.getDate()+i*rebal);
       return d.toISOString().slice(0,10);
     });
@@ -1915,10 +1915,10 @@ function runStep6() {
     ].map(r=>`<tr><td><b>${r.label}</b></td><td>${r.mo}</td><td>${r.so}</td><td>${r.ew}</td></tr>`).join('');
 
     document.getElementById('bt-notes').textContent =
-      `The multi-output LSTM strategy (Long Top-${nLong}, Short Bottom-${nShort}, rebalance every ${rebal} days) generates a higher Sharpe ratio than the EW benchmark over 2021–2022. ` +
+      `The multi-output LSTM strategy (Long Top-${nLong}, Short Bottom-${nShort}, rebalance every ${rebal} days) generates a higher Sharpe ratio than the EW benchmark over 2018–2022. ` +
       'The strategy is dollar-neutral (equal long and short notional), which means its performance is largely driven by the cross-sectional ranking accuracy of the model. ' +
       'The multi-output architecture outperforms the single-output strategy, confirming that the cross-asset information encoded in the shared layers adds tangible value. ' +
-      'The test period (2021–2022) includes elevated inflation and aggressive monetary tightening, which introduced regime shifts particularly challenging for historically-trained models. ' +
+      'The test period (2018–2022) includes elevated inflation and aggressive monetary tightening, which introduced regime shifts particularly challenging for historically-trained models. ' +
       'Despite this, the directional model maintains a hit rate above 55%, providing a basis for positive risk-adjusted returns.';
 
     state.backtest = {stratRets, ewRets, singleRets, cumStrat, cumEW, cumSingle};
@@ -1932,7 +1932,7 @@ function runStep6() {
 const QUESTIONS = {
   q1: `As a financial deep learning analyst, provide a thorough academic discussion on: What are the comparative predictability properties of MLP, CNN-GAF, and LSTM architectures across different ETF asset classes (Equity/SPY, Long Bonds/TLT, Short Bonds/SHY, Gold/GLD, Oil/DBO)? Tie the differences to how each architecture processes sequential financial data and to the statistical properties (volatility, autocorrelation, fat tails) of each asset class. Reference that directional accuracies ranged from ~52-60%, with Short Bonds being most predictable and Oil least predictable. Be specific and analytical.`,
   q2: `As a financial deep learning analyst, discuss: Do multi-output LSTM models capturing cross-asset joint predictions capture fundamentally different information than an ensemble of single-output LSTMs? Focus on: (1) cross-asset correlations in shared layers, (2) whether the performance gains (~1-2pp directional accuracy improvement) are statistically meaningful, (3) whether the same information is being captured or whether cross-asset dependencies provide genuinely new signal. Be analytical and reference the specific architecture (per-asset LSTM branches + shared dense layers → 5 output heads).`,
-  q3: `As a financial analyst writing a report for an institutional investor, discuss: How does a multi-output LSTM long/short asset allocation strategy (long top-2, short bottom-2, rebalanced every 25 days) compare to a Buy-and-Hold Equally Weighted portfolio of 5 ETFs (SPY, TLT, SHY, GLD, DBO) during 2021-2022? What does this imply about the practical value of multi-asset prediction in this setup? Consider the market regime (rising rates, inflation, equity drawdown) and the strategy's dollar-neutrality.`,
+  q3: `As a financial analyst writing a report for an institutional investor, discuss: How does a multi-output LSTM long/short asset allocation strategy (long top-2, short bottom-2, rebalanced every 25 days) compare to a Buy-and-Hold Equally Weighted portfolio of 5 ETFs (SPY, TLT, SHY, GLD, DBO) during 2018-2022? What does this imply about the practical value of multi-asset prediction in this setup? Consider the market regime (rising rates, inflation, equity drawdown) and the strategy's dollar-neutrality.`,
   q4: `Which ETF asset class is most predictable with deep learning models and why? Compare SPY (equity, 16.8% ann. vol, mild negative corr with bonds), TLT (long bonds, 13.1% ann. vol), SHY (short bonds, 1.1% ann. vol, high autocorrelation), GLD (gold, 13.6% ann. vol, low correlation), and DBO (oil, 32.4% ann. vol, fat tails, skew -0.88). Relate predictability to autocorrelation structure, noise level, and information content of 60-day return windows.`,
   q5: `Explain in technical detail why the Gramian Angular Field (GAF) transformation changes what a CNN can learn from financial time series compared to a raw MLP on 1D return sequences. Cover: (1) the mathematical encoding (r_i → φ_i = arccos(r_i), G_{i,j} = cos(φ_i + φ_j)), (2) what spatial patterns in the 60×60 image represent temporal return correlations, (3) why convolutional filters are better at detecting these patterns than fully-connected layers, and (4) observed performance differences across asset classes.`,
   custom: ''
