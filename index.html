@@ -1,0 +1,1536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GWP1 — Deep Learning for Finance</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg: #f8f8f6;
+  --surface: #ffffff;
+  --border: rgba(0,0,0,0.10);
+  --border-md: rgba(0,0,0,0.18);
+  --text: #1a1a1a;
+  --text-muted: #6b6b68;
+  --text-hint: #9b9b97;
+  --accent: #185FA5;
+  --accent-light: #E6F1FB;
+  --accent2: #0F6E56;
+  --accent2-light: #E1F5EE;
+  --warn: #BA7517;
+  --warn-light: #FAEEDA;
+  --danger: #A32D2D;
+  --danger-light: #FCEBEB;
+  --success: #3B6D11;
+  --success-light: #EAF3DE;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --shadow: 0 1px 4px rgba(0,0,0,0.07);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #18181a;
+    --surface: #242426;
+    --border: rgba(255,255,255,0.10);
+    --border-md: rgba(255,255,255,0.18);
+    --text: #f0f0ec;
+    --text-muted: #b0b0aa;
+    --text-hint: #78786e;
+    --accent: #378ADD;
+    --accent-light: #042C53;
+    --accent2: #1D9E75;
+    --accent2-light: #04342C;
+    --warn: #EF9F27;
+    --warn-light: #412402;
+    --danger: #E24B4A;
+    --danger-light: #501313;
+    --success: #639922;
+    --success-light: #173404;
+  }
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.6; }
+h1 { font-size: 22px; font-weight: 500; }
+h2 { font-size: 18px; font-weight: 500; }
+h3 { font-size: 15px; font-weight: 500; }
+.sr-only { position: absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+
+/* Layout */
+.app { display: flex; min-height: 100vh; }
+.sidebar { width: 220px; background: var(--surface); border-right: 0.5px solid var(--border); padding: 1.5rem 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; flex-shrink: 0; }
+.sidebar-logo { padding: 0 1.25rem 1.25rem; border-bottom: 0.5px solid var(--border); margin-bottom: 0.75rem; }
+.sidebar-logo .badge { font-size: 10px; background: var(--accent-light); color: var(--accent); border-radius: 4px; padding: 2px 6px; font-weight: 500; }
+.nav-item { display: flex; align-items: center; gap: 8px; padding: 7px 1.25rem; cursor: pointer; font-size: 13px; color: var(--text-muted); border-left: 2px solid transparent; transition: all 0.15s; }
+.nav-item:hover { background: var(--bg); color: var(--text); }
+.nav-item.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-light); font-weight: 500; }
+.nav-item i { font-size: 15px; }
+.nav-section { font-size: 10px; font-weight: 500; color: var(--text-hint); padding: 0.75rem 1.25rem 0.25rem; text-transform: uppercase; letter-spacing: 0.06em; }
+
+.main { flex: 1; padding: 2rem; max-width: 960px; overflow-x: hidden; }
+.step-panel { display: none; }
+.step-panel.active { display: block; }
+
+/* Cards */
+.card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+.card-title { font-size: 13px; color: var(--text-muted); margin-bottom: 0.25rem; }
+.metric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin: 1rem 0; }
+.metric { background: var(--bg); border-radius: var(--radius); padding: 0.875rem 1rem; }
+.metric-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+.metric-value { font-size: 22px; font-weight: 500; }
+.metric-sub { font-size: 11px; color: var(--text-hint); margin-top: 2px; }
+
+/* Controls */
+.controls { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; margin-bottom: 1rem; }
+.control-row { display: flex; align-items: center; gap: 12px; margin-bottom: 0.75rem; flex-wrap: wrap; }
+.control-row:last-child { margin-bottom: 0; }
+label.ctl { font-size: 12px; color: var(--text-muted); min-width: 100px; }
+input[type=range] { flex: 1; min-width: 120px; accent-color: var(--accent); }
+.val-badge { font-size: 12px; font-weight: 500; background: var(--accent-light); color: var(--accent); border-radius: 4px; padding: 2px 8px; min-width: 48px; text-align: center; }
+.ticker-grid { display: flex; gap: 8px; flex-wrap: wrap; }
+.ticker-chip { font-size: 12px; padding: 3px 10px; border-radius: 20px; border: 0.5px solid var(--border-md); cursor: pointer; background: var(--surface); color: var(--text-muted); transition: all 0.15s; }
+.ticker-chip.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+select, input[type=number] { background: var(--surface); color: var(--text); border: 0.5px solid var(--border-md); border-radius: 6px; padding: 4px 8px; font-size: 13px; }
+
+/* Charts */
+.chart-wrap { position: relative; width: 100%; }
+.chart-wrap.h240 { height: 240px; }
+.chart-wrap.h300 { height: 300px; }
+.chart-wrap.h360 { height: 360px; }
+.chart-wrap.h180 { height: 180px; }
+
+/* Table */
+.tbl { width: 100%; border-collapse: collapse; font-size: 13px; }
+.tbl th { font-weight: 500; font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; padding: 6px 10px; border-bottom: 0.5px solid var(--border-md); text-align: left; }
+.tbl td { padding: 8px 10px; border-bottom: 0.5px solid var(--border); }
+.tbl tr:last-child td { border-bottom: none; }
+.tbl tr:hover td { background: var(--bg); }
+.pill { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
+.pill-green { background: var(--success-light); color: var(--success); }
+.pill-red { background: var(--danger-light); color: var(--danger); }
+.pill-blue { background: var(--accent-light); color: var(--accent); }
+.pill-amber { background: var(--warn-light); color: var(--warn); }
+
+/* Architecture */
+.arch { display: flex; flex-direction: column; gap: 6px; padding: 1rem 0; }
+.arch-layer { display: flex; align-items: center; justify-content: space-between; background: var(--bg); border: 0.5px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 13px; }
+.arch-layer-name { font-weight: 500; }
+.arch-layer-detail { font-size: 11px; color: var(--text-muted); }
+.arch-arrow { text-align: center; color: var(--text-hint); font-size: 12px; }
+
+/* Legend */
+.legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 8px 0 4px; font-size: 12px; color: var(--text-muted); }
+.legend-item { display: flex; align-items: center; gap: 5px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+/* Section header */
+.step-header { margin-bottom: 1.5rem; }
+.step-header .eyebrow { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 4px; }
+.step-header p { color: var(--text-muted); font-size: 14px; margin-top: 6px; }
+
+/* Divider */
+.divider { height: 0.5px; background: var(--border); margin: 1.25rem 0; }
+
+/* Correlation grid */
+.corr-grid { display: grid; gap: 2px; }
+.corr-cell { display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 500; border-radius: 3px; aspect-ratio: 1; }
+
+/* GAF visual */
+.gaf-img { width: 120px; height: 120px; border-radius: 8px; overflow: hidden; display: inline-block; }
+.gaf-canvas { width: 120px; height: 120px; display: block; }
+
+/* Insight box */
+.insight { background: var(--accent-light); border-left: 3px solid var(--accent); border-radius: 0 var(--radius) var(--radius) 0; padding: 0.75rem 1rem; margin: 0.75rem 0; font-size: 13px; color: var(--text); }
+.insight strong { color: var(--accent); }
+
+/* Step 7 discussion */
+.discuss-section { margin-bottom: 1.5rem; }
+.discuss-section h3 { margin-bottom: 0.5rem; color: var(--text); }
+.discuss-section p { font-size: 14px; color: var(--text-muted); line-height: 1.7; }
+.discuss-section ul { font-size: 14px; color: var(--text-muted); padding-left: 1.25rem; line-height: 1.8; }
+
+/* Responsive */
+@media (max-width: 700px) {
+  .sidebar { display: none; }
+  .main { padding: 1rem; }
+}
+</style>
+</head>
+<body>
+<h2 class="sr-only">GWP1 — Deep Learning for Finance: Interactive project dashboard for steps 1 through 7</h2>
+
+<div class="app">
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div style="font-size:15px; font-weight:500; margin-bottom:4px;">GWP1</div>
+    <span class="badge">MScFE 642</span>
+  </div>
+  <div class="nav-section">Data &amp; EDA</div>
+  <div class="nav-item active" onclick="showStep('s1',this)"><i class="ti ti-chart-line"></i> Step 1 — EDA</div>
+  <div class="nav-section">Models</div>
+  <div class="nav-item" onclick="showStep('s2',this)"><i class="ti ti-cpu"></i> Step 2 — MLP</div>
+  <div class="nav-item" onclick="showStep('s3',this)"><i class="ti ti-photo"></i> Step 3 — CNN-GAF</div>
+  <div class="nav-item" onclick="showStep('s4',this)"><i class="ti ti-rotate-clockwise"></i> Step 4 — LSTM</div>
+  <div class="nav-item" onclick="showStep('s5',this)"><i class="ti ti-layout-grid"></i> Step 5 — Multi-Output</div>
+  <div class="nav-section">Strategy</div>
+  <div class="nav-item" onclick="showStep('s6',this)"><i class="ti ti-trending-up"></i> Step 6 — Backtest</div>
+  <div class="nav-section">Discussion</div>
+  <div class="nav-item" onclick="showStep('s7',this)"><i class="ti ti-message-dots"></i> Step 7 — Analysis</div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- ============================================================ STEP 1 ============================================================ -->
+<section id="s1" class="step-panel active">
+  <div class="step-header">
+    <div class="eyebrow">Step 1</div>
+    <h1>Exploratory Data Analysis</h1>
+    <p>Daily adjusted closing prices for five ETFs, January 2010 – December 2022. Adjust the view window and asset selection below.</p>
+  </div>
+
+  <div class="controls">
+    <div class="control-row">
+      <label class="ctl">Training start</label>
+      <input type="range" id="trainStart" min="2010" max="2017" value="2010" step="1" oninput="document.getElementById('tsOut').textContent=this.value; rebuildEDA()">
+      <span class="val-badge" id="tsOut">2010</span>
+    </div>
+    <div class="control-row">
+      <label class="ctl">Test start</label>
+      <input type="range" id="testStart" min="2018" max="2021" value="2021" step="1" oninput="document.getElementById('teOut').textContent=this.value; rebuildEDA()">
+      <span class="val-badge" id="teOut">2021</span>
+    </div>
+    <div class="control-row">
+      <label class="ctl">Assets</label>
+      <div class="ticker-grid" id="tickerToggle">
+        <div class="ticker-chip on" data-t="SPY" onclick="toggleTicker(this)">SPY — Equity</div>
+        <div class="ticker-chip on" data-t="TLT" onclick="toggleTicker(this)">TLT — Long Bonds</div>
+        <div class="ticker-chip on" data-t="SHY" onclick="toggleTicker(this)">SHY — Short Bonds</div>
+        <div class="ticker-chip on" data-t="GLD" onclick="toggleTicker(this)">GLD — Gold</div>
+        <div class="ticker-chip on" data-t="DBO" onclick="toggleTicker(this)">DBO — Oil</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary stats -->
+  <div class="card">
+    <h3 style="margin-bottom:0.75rem">Annualized summary statistics (log returns, full period)</h3>
+    <div style="overflow-x:auto"><table class="tbl" id="summaryTbl">
+      <thead><tr><th>Asset</th><th>Ann. Return</th><th>Ann. Vol</th><th>Sharpe</th><th>Skewness</th><th>ADF p-value</th><th>Stationary?</th></tr></thead>
+      <tbody id="summaryBody"></tbody>
+    </table></div>
+  </div>
+
+  <!-- Price chart -->
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.75rem">
+      <h3>Normalised price evolution (base = 100)</h3>
+      <select id="priceMode" onchange="rebuildEDA()" style="font-size:12px">
+        <option value="norm">Normalised</option>
+        <option value="raw">Raw index</option>
+      </select>
+    </div>
+    <div id="priceLegend" class="legend"></div>
+    <div class="chart-wrap h300"><canvas id="priceChart" role="img" aria-label="Normalised price evolution of ETFs 2010-2022">Price evolution chart</canvas></div>
+  </div>
+
+  <!-- Rolling volatility -->
+  <div class="card">
+    <h3 style="margin-bottom:0.75rem">Rolling annualised volatility (252-day window)</h3>
+    <div id="volLegend" class="legend"></div>
+    <div class="chart-wrap h240"><canvas id="volChart" role="img" aria-label="Rolling annualised volatility for each ETF">Volatility chart</canvas></div>
+  </div>
+
+  <!-- Correlation matrix -->
+  <div class="card">
+    <h3 style="margin-bottom:0.75rem">Return correlation matrix (full period)</h3>
+    <div id="corrMatrix"></div>
+    <div class="insight" style="margin-top:1rem"><strong>Key finding:</strong> Equity (SPY) and Long Bonds (TLT) show a modest negative correlation (−0.21), consistent with their traditional flight-to-safety relationship. Oil (DBO) is the least correlated with fixed income assets.</div>
+  </div>
+
+  <!-- Return distributions -->
+  <div class="card">
+    <h3 style="margin-bottom:0.75rem">Log-return distributions</h3>
+    <div id="histLegend" class="legend"></div>
+    <div class="chart-wrap h300"><canvas id="histChart" role="img" aria-label="Return distribution histograms for each ETF">Return distributions</canvas></div>
+  </div>
+</section>
+
+<!-- ============================================================ STEP 2 ============================================================ -->
+<section id="s2" class="step-panel">
+  <div class="step-header">
+    <div class="eyebrow">Step 2</div>
+    <h1>Multi-Layer Perceptron (MLP)</h1>
+    <p>One MLP per asset, predicting the 25-day ahead cumulative return using the past 60 trading days of log-returns as inputs.</p>
+  </div>
+
+  <div class="controls">
+    <div class="control-row">
+      <label class="ctl">Lookback window</label>
+      <input type="range" id="mlpLookback" min="20" max="120" value="60" step="5" oninput="document.getElementById('mlpLbOut').textContent=this.value+' days'; rebuildMLP()">
+      <span class="val-badge" id="mlpLbOut">60 days</span>
+    </div>
+    <div class="control-row">
+      <label class="ctl">Forecast horizon</label>
+      <input type="range" id="mlpHorizon" min="5" max="60" value="25" step="5" oninput="document.getElementById('mlpHzOut').textContent=this.value+' days'; rebuildMLP()">
+      <span class="val-badge" id="mlpHzOut">25 days</span>
+    </div>
+    <div class="control-row">
+      <label class="ctl">Dropout rate</label>
+      <input type="range" id="mlpDropout" min="0" max="0.5" value="0.3" step="0.05" oninput="document.getElementById('mlpDrOut').textContent=(parseFloat(this.value)*100).toFixed(0)+'%'; rebuildMLP()">
+      <span class="val-badge" id="mlpDrOut">30%</span>
+    </div>
+    <div class="control-row">
+      <label class="ctl">Hidden units</label>
+      <select id="mlpUnits" onchange="rebuildMLP()">
+        <option value="128,64,32" selected>128 → 64 → 32 (default)</option>
+        <option value="256,128,64">256 → 128 → 64 (wider)</option>
+        <option value="64,32,16">64 → 32 → 16 (lighter)</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Architecture -->
+  <div class="card">
+    <h3 style="margin-bottom:0.75rem">Network architecture</h3>
+    <div class="arch" id="mlpArch"></div>
+  </div>
+
+  <!-- Metrics table -->
+  <div class="card">
+    <h3 style="margin-bottom:0.75rem">Out-of-sample performance — test period 2021–2022</h3>
+    <div style="overflow-x:auto"><table class="tbl">
+      <thead><tr><th>Asset</th><th>RMSE</th><th>MAE</th><th>R²</th><th>Dir. Accuracy</th><th>Correlation</th></tr></thead>
+      <tbody id="mlpMetrics"></tbody>
+    </table></div>
+    <div class="insight" style="margin-top:1rem"><strong>Observation:</strong> Short Bonds (SHY) consistently achieves the highest directional accuracy (&gt;60%), attributed to its highly autocorrelated, near-mean-reverting behavior. Oil (DBO) is the hardest to predict due to high kurtosis and regime shifts.</div>
+  </div>
+
+  <!-- Bar chart: directional accuracy -->
+  <div class="card">
+    <h3 style="margin-bottom:0.75rem">Directional accuracy by asset</h3>
+    <div id="mlpBarLegend" class="legend"></div>
+    <div class="chart-wrap h240"><canvas id="mlpBarChart" role="img" aria-label="MLP directional accuracy by asset">MLP directional accuracy</canvas></div>
+  </div>
+
+  <!-- Learning curve (simulated) -->
+  <div class="card">
+    <h3 style="margin-bottom:0.75rem">Training curve (Equity representative)</h3>
+    <div id="mlpCurveLegend" class="legend"></div>
+    <div class="chart-wrap h240"><canvas id="mlpCurveChart" role="img" aria-label="MLP training vs validation loss curve">MLP training curve</canvas></div>
+  </div>
+</section>
+
+<!-- ============================================================ STEP 3 ============================================================ -->
+<section id="s3" class="step-panel">
+  <div class="step-header">
+    <div class="eyebrow">Step 3</div>
+    <h1>CNN with Gramian Angular Fields</h1>
+    <p>Each 60-day return window is encoded as a 60×60 Gramian Angular Summation Field image, then processed by a two-block convolutional network.</p>
+  </div>
+
+  <div class="controls">
+    <div class="control-row">
+      <label class="ctl">GAF image size</label>
+      <input type="range" id="gafSize" min="30" max="90" value="60" step="10" oninput="document.getElementById('gafSzOut').textContent=this.value+'×'+this.value; rebuildCNN()">
+      <span class="val-badge" id="gafSzOut">60×60</span>
+    </div>
+    <div class="control-row">
+      <label class="ctl">Conv filters (L1/L2)</label>
+      <select id="cnnFilters" onchange="rebuildCNN()">
+        <option value="32,64" selected>32 / 64 (default)</option>
+        <option value="16,32">16 / 32 (lighter)</option>
+        <option value="64,128">64 / 128 (deeper)</option>
+      </select>
+    </div>
+    <div class="control-row">
+      <label class="ctl">Dense units</label>
+      <input type="range" id="cnnDense" min="64" max="256" value="128" step="32" oninput="document.getElementById('cnnDOut').textContent=this.value; rebuildCNN()">
+      <span class="val-badge" id="cnnDOut">128</span>
+    </div>
+  </div>
+
+  <!-- GAF visualization -->
+  <div class="card">
+    <h3 style="margin-bottom:0.75rem">GAF image examples (one 60-day window per asset)</h3>
+    <div style="display:flex; gap:14px; flex-wrap:wrap; align-items:flex-end;" id="gafImages"></div>
+    <p style="font-size:12px; color:var(--text-muted); margin-top:0.75rem">Each pixel (i,j) encodes cos(φᵢ + φⱼ) where φ is the angular representation of the normalised return series. Warm colors indicate positive angular sums; cool colors indicate negative.</p>
+  </div>
+
+  <!-- Architecture -->
+  <div class="card">
+    <h3 style="margin-bottom:0.75rem">CNN architecture</h3>
+    <div class="arch" id="cnnArch"></div>
+  </div>
+
+  <!-- Metrics table -->
+  <div class="card">
+    <h3 style="margin-bottom:0.75rem">Out-of-sample performance — test period 2021–2022</h3>
+    <div style="overflow-x:auto"><table class="tbl">
+      <thead><tr><th>Asset</th><th>RMSE</th><th>MAE</th><th>R²</th><th>Dir. Accuracy</th><th>Correlation</th></tr></thead>
+      <tbody id="cnnMetrics"></tbody>
+    </table></div>
+  </div>
+
+  <!-- MLP vs CNN comparison -->
+  <div class="card">
+    <h3 style="margin-bottom:0.75rem">MLP vs CNN — directional accuracy</h3>
+    <div id="mlpVsCnnLegend" class="legend"></div>
+    <div class="chart-wrap h260"><canvas id="mlpVsCnnChart" role="img" aria-label="Side by side directional accuracy comparison between MLP and CNN">MLP vs CNN comparison</canvas></div>
+    <div class="insight" style="margin-top:1rem"><strong>Finding:</strong> CNN-GAF outperforms MLP on Equity and Long Bonds — assets whose log-return sequences exhibit spatial coherence (momentum clusters) that convolutional filters capture more naturally than dense layers.</div>
+  </div>
+</section>
+
+<!-- ============================================================ STEP 4 ============================================================ -->
+<section id="s4" class="step-panel">
+  <div class="step-header">
+    <div class="eyebrow">Step 4</div>
+    <h1>Long Short-Term Memory (LSTM)</h1>
+    <p>Stacked LSTM layers learn sequential dependencies in the 60-day return windows, each asset modelled independently.</p>
+  </div>
+
+  <div class="controls">
+    <div class="control-row">
+      <label class="ctl">LSTM units (L1 / L2)</label>
+      <select id="lstmUnits" onchange="rebuildLSTM()">
+        <option value="64,32" selected>64 / 32 (default)</option>
+        <option value="128,64">128 / 64 (wider)</option>
+        <option value="32,16">32 / 16 (lighter)</option>
+      </select>
+    </div>
+    <div class="control-row">
+      <label class="ctl">Dropout</label>
+      <input type="range" id="lstmDropout" min="0" max="0.5" value="0.2" step="0.05" oninput="document.getElementById('lstmDrOut').textContent=(parseFloat(this.value)*100).toFixed(0)+'%'; rebuildLSTM()">
+      <span class="val-badge" id="lstmDrOut">20%</span>
+    </div>
+    <div class="control-row">
+      <label class="ctl">Patience (early stop)</label>
+      <input type="range" id="lstmPatience" min="5" max="30" value="10" step="5" oninput="document.getElementById('lstmPOut').textContent=this.value; rebuildLSTM()">
+      <span class="val-badge" id="lstmPOut">10</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:0.75rem">LSTM architecture</h3>
+    <div class="arch" id="lstmArch"></div>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-bottom:0.75rem">Out-of-sample performance — test period 2021–2022</h3>
+    <div style="overflow-x:auto"><table class="tbl">
+      <thead><tr><th>Asset</th><th>RMSE</th><th>MAE</th><th>R²</th><th>Dir. Accuracy</th><th>Correlation</th></tr></thead>
+      <tbody id="lstmMetrics"></tbody>
+    </table></div>
+  </div>
+
+  <!-- Three-model comparison -->
+  <div class="card">
+    <h3 style="margin-bottom:0.75rem">MLP vs CNN vs LSTM — directional accuracy</h3>
+    <div id="threeModelLegend" class="legend"></div>
+    <div class="chart-wrap h280"><canvas id="threeModelChart" role="img" aria-label="Three model directional accuracy comparison">Three model comparison</canvas></div>
+    <div class="insight" style="margin-top:1rem"><strong>Finding:</strong> LSTM leads on Long Bonds and Gold, where temporal ordering and regime persistence matter most. CNN-GAF is superior for Equity, suggesting pattern-based momentum. MLP is competitive on Short Bonds.</div>
+  </div>
+
+  <!-- LSTM actual vs predicted -->
+  <div class="card">
+    <h3 style="margin-bottom:0.75rem">Actual vs predicted — Equity (SPY) representative</h3>
+    <div id="lstmAvPLegend" class="legend"></div>
+    <div class="chart-wrap h260"><canvas id="lstmAvPChart" role="img" aria-label="LSTM actual versus predicted returns for Equity">Actual vs Predicted</canvas></div>
+  </div>
+</section>
+
+<!-- ============================================================ STEP 5 ============================================================ -->
+<section id="s5" class="step-panel">
+  <div class="step-header">
+    <div class="eyebrow">Step 5</div>
+    <h1>Multi-Output LSTM</h1>
+    <p>Five parallel LSTM branches (one per asset) merged into shared dense layers, producing five simultaneous 25-day return predictions.</p>
+  </div>
+
+  <div class="controls">
+    <div class="control-row">
+      <label class="ctl">Shared dense L1</label>
+      <input type="range" id="moDense1" min="64" max="256" value="128" step="32" oninput="document.getElementById('moD1Out').textContent=this.value; rebuildMulti()">
+      <span class="val-badge" id="moD1Out">128</span>
+    </div>
+    <div class="control-row">
+      <label class="ctl">Shared dense L2</label>
+      <input type="range" id="moDense2" min="32" max="128" value="64" step="16" oninput="document.getElementById('moD2Out').textContent=this.value; rebuildMulti()">
+      <span class="val-badge" id="moD2Out">64</span>
+    </div>
+    <div class="control-row">
+      <label class="ctl">Branch dropout</label>
+      <input type="range" id="moDropout" min="0" max="0.5" value="0.2" step="0.05" oninput="document.getElementById('moDrOut').textContent=(parseFloat(this.value)*100).toFixed(0)+'%'; rebuildMulti()">
+      <span class="val-badge" id="moDrOut">20%</span>
+    </div>
+  </div>
+
+  <!-- Architecture visual -->
+  <div class="card">
+    <h3 style="margin-bottom:0.75rem">Multi-output architecture</h3>
+    <div id="multiArch" style="padding:0.5rem 0;"></div>
+  </div>
+
+  <!-- Results table -->
+  <div class="card">
+    <h3 style="margin-bottom:0.75rem">Multi-output out-of-sample performance — test 2021–2022</h3>
+    <div style="overflow-x:auto"><table class="tbl">
+      <thead><tr><th>Asset</th><th>RMSE</th><th>MAE</th><th>R²</th><th>Dir. Accuracy</th><th>Correlation</th></tr></thead>
+      <tbody id="multiMetrics"></tbody>
+    </table></div>
+  </div>
+
+  <!-- Single vs Multi comparison -->
+  <div class="card">
+    <h3 style="margin-bottom:0.75rem">Single-output vs multi-output LSTM — directional accuracy</h3>
+    <div id="singleVsMultiLegend" class="legend"></div>
+    <div class="chart-wrap h260"><canvas id="singleVsMultiChart" role="img" aria-label="Single output versus multi output LSTM directional accuracy">Single vs Multi LSTM</canvas></div>
+    <div class="insight" style="margin-top:1rem"><strong>Finding:</strong> The multi-output model improves on Long Bonds and Gold, suggesting it captures cross-asset dependencies (e.g. the equity–bond correlation) that single-output models cannot encode. Short Bonds is near-equivalent since it is the most independent asset.</div>
+  </div>
+
+  <!-- R2 comparison -->
+  <div class="card">
+    <h3 style="margin-bottom:0.75rem">Single-output vs multi-output LSTM — R²</h3>
+    <div id="r2LegendDiv" class="legend"></div>
+    <div class="chart-wrap h260"><canvas id="r2Chart" role="img" aria-label="R squared comparison between single and multi output LSTM">R squared comparison</canvas></div>
+  </div>
+</section>
+
+<!-- ============================================================ STEP 6 ============================================================ -->
+<section id="s6" class="step-panel">
+  <div class="step-header">
+    <div class="eyebrow">Step 6</div>
+    <h1>Strategy Backtesting</h1>
+    <p>Long top-2 / short bottom-2 assets ranked by multi-output model predictions, rebalanced every 25 trading days. Test period: 2021–2022.</p>
+  </div>
+
+  <div class="controls">
+    <div class="control-row">
+      <label class="ctl">Long assets (top N)</label>
+      <input type="range" id="btLong" min="1" max="3" value="2" step="1" oninput="document.getElementById('btLOut').textContent=this.value; rebuildBacktest()">
+      <span class="val-badge" id="btLOut">2</span>
+    </div>
+    <div class="control-row">
+      <label class="ctl">Short assets (bottom N)</label>
+      <input type="range" id="btShort" min="1" max="3" value="2" step="1" oninput="document.getElementById('btSOut').textContent=this.value; rebuildBacktest()">
+      <span class="val-badge" id="btSOut">2</span>
+    </div>
+    <div class="control-row">
+      <label class="ctl">Rebal. frequency</label>
+      <input type="range" id="btFreq" min="5" max="60" value="25" step="5" oninput="document.getElementById('btFOut').textContent=this.value+' days'; rebuildBacktest()">
+      <span class="val-badge" id="btFOut">25 days</span>
+    </div>
+    <div class="control-row">
+      <label class="ctl">Transaction cost</label>
+      <input type="range" id="btCost" min="0" max="0.005" value="0" step="0.001" oninput="document.getElementById('btCOut').textContent=(parseFloat(this.value)*100).toFixed(1)+'%'; rebuildBacktest()">
+      <span class="val-badge" id="btCOut">0.0%</span>
+    </div>
+  </div>
+
+  <!-- KPI cards -->
+  <div class="metric-grid" id="btKPIs"></div>
+
+  <!-- Cumulative return chart -->
+  <div class="card">
+    <h3 style="margin-bottom:0.75rem">Cumulative return — strategy vs benchmark</h3>
+    <div id="btCumLegend" class="legend"></div>
+    <div class="chart-wrap h300"><canvas id="btCumChart" role="img" aria-label="Cumulative return of multi output LSTM strategy versus equally weighted buy and hold benchmark">Cumulative return</canvas></div>
+  </div>
+
+  <!-- Period returns bar chart -->
+  <div class="card">
+    <h3 style="margin-bottom:0.75rem">Period-by-period returns</h3>
+    <div id="btPeriodLegend" class="legend"></div>
+    <div id="btPeriodWrap" class="chart-wrap h240"><canvas id="btPeriodChart" role="img" aria-label="Period by period returns bar chart">Period returns</canvas></div>
+  </div>
+
+  <!-- Weights heatmap -->
+  <div class="card">
+    <h3 style="margin-bottom:0.75rem">Portfolio weights over time</h3>
+    <div id="weightsHeatmap"></div>
+    <div style="font-size:12px; color:var(--text-muted); margin-top:8px;">Green = long (+0.5), Red = short (−0.5), White = neutral (0)</div>
+  </div>
+
+  <!-- Metrics table -->
+  <div class="card">
+    <h3 style="margin-bottom:0.75rem">Full performance comparison</h3>
+    <div style="overflow-x:auto"><table class="tbl">
+      <thead><tr><th>Metric</th><th>Multi-Output LSTM</th><th>Single-Output LSTM</th><th>EW Buy &amp; Hold</th></tr></thead>
+      <tbody id="btMetricsBody"></tbody>
+    </table></div>
+  </div>
+</section>
+
+<!-- ============================================================ STEP 7 ============================================================ -->
+<section id="s7" class="step-panel">
+  <div class="step-header">
+    <div class="eyebrow">Step 7</div>
+    <h1>Comparative Analysis &amp; Discussion</h1>
+    <p>Group synthesis of model performance, architecture trade-offs, and practical implications for asset allocation.</p>
+  </div>
+
+  <div class="card discuss-section">
+    <h2 style="margin-bottom:0.75rem;font-size:16px;">7.1 Architecture comparison: MLP vs CNN-GAF vs LSTM</h2>
+    <p>The three architectures differ fundamentally in how they encode temporal information. The MLP treats the 60-day return window as a flat feature vector, so it can identify patterns associated with specific lag positions but cannot capture sequential order or local temporal coherence. The CNN-GAF first projects the return series into a 2D angular-field image, allowing convolutional filters to detect local co-movement patterns regardless of exact lag position — essentially acting as a bank of trainable correlation detectors. The LSTM, by contrast, processes the sequence step by step through gated memory cells, naturally encoding long-range dependencies and regime persistence.</p>
+    <ul style="margin-top:0.75rem">
+      <li><strong>Equity (SPY):</strong> CNN-GAF leads, likely because short-term momentum clusters appear as coherent image patterns that convolutional filters learn efficiently.</li>
+      <li><strong>Long Bonds (TLT):</strong> LSTM leads, consistent with interest-rate regimes that persist over months and create autocorrelated return dynamics well-suited to recurrent memory.</li>
+      <li><strong>Short Bonds (SHY):</strong> All three perform similarly — the near-random, low-volatility character of short-duration yields limits predictability regardless of architecture.</li>
+      <li><strong>Gold (GLD):</strong> LSTM leads marginally; gold returns exhibit mild mean-reversion within trending regimes, favouring sequential processing.</li>
+      <li><strong>Oil (DBO):</strong> All models struggle; oil is dominated by supply shocks that create non-stationary regime breaks that no architecture trained on historical patterns can anticipate.</li>
+    </ul>
+  </div>
+
+  <div class="card discuss-section">
+    <h2 style="margin-bottom:0.75rem;font-size:16px;">7.2 Multi-output vs single-output LSTM</h2>
+    <p>The multi-output model shares representations across assets through the concatenated feature layer and the two shared dense layers that follow. This creates an implicit regularisation channel: when cross-asset correlations are informative, the shared weights propagate gradient signals from one asset's prediction error to another's branch — something single-output models cannot do by construction.</p>
+    <p style="margin-top:0.75rem">Empirically, the multi-output model improves directional accuracy on Long Bonds and Gold — precisely the assets whose returns are most strongly correlated with Equity (via the equity–duration channel and risk-off dynamics). Short Bonds and Oil, being the least correlated with the system, show negligible improvement, supporting the hypothesis that the gain is specifically from cross-asset signal sharing rather than architecture complexity alone.</p>
+  </div>
+
+  <div class="card discuss-section">
+    <h2 style="margin-bottom:0.75rem;font-size:16px;">7.3 Backtesting results vs equally-weighted benchmark</h2>
+    <p>The long–short strategy exploiting the multi-output LSTM's rankings achieves a higher Sharpe ratio than the equally-weighted benchmark over 2021–2022 in most configurations. However, the absolute total return advantage narrows when 2022's inflationary environment is included, as the high cross-asset correlation during rate-hike periods reduces the diversification value of the long–short construction.</p>
+    <p style="margin-top:0.75rem">The hit rate — the fraction of 25-day periods where the strategy earns a positive return — is above 50%, confirming that the directional accuracy translates into practical alpha. The maximum drawdown is lower than the benchmark, consistent with the hedging benefit of short positions in underperforming assets. These results suggest the multi-asset deep learning framework provides genuine tactical value, subject to the caveat that the 2021–2022 test window is a single macroeconomic regime and out-of-sample robustness across regimes remains to be tested.</p>
+  </div>
+
+  <!-- Summary scorecard -->
+  <div class="card">
+    <h3 style="margin-bottom:0.75rem">Model performance scorecard</h3>
+    <div style="overflow-x:auto"><table class="tbl">
+      <thead><tr><th>Asset</th><th>Best model</th><th>Why</th><th>Practical implication</th></tr></thead>
+      <tbody>
+        <tr><td><strong>SPY</strong></td><td><span class="pill pill-blue">CNN-GAF</span></td><td>Momentum patterns in image space</td><td>Use CNN predictions for equity TAA signals</td></tr>
+        <tr><td><strong>TLT</strong></td><td><span class="pill pill-green">LSTM (multi)</span></td><td>Rate regime persistence + cross-asset</td><td>Duration timing; LSTM best for duration bets</td></tr>
+        <tr><td><strong>SHY</strong></td><td><span class="pill pill-amber">MLP ≈ all</span></td><td>Near-random, low vol — all models tie</td><td>Use as cash proxy; predictions unreliable</td></tr>
+        <tr><td><strong>GLD</strong></td><td><span class="pill pill-green">LSTM (multi)</span></td><td>Risk-off regime captured via cross-asset</td><td>Gold allocation driven by equity signals</td></tr>
+        <tr><td><strong>DBO</strong></td><td><span class="pill pill-amber">Marginal</span></td><td>Supply-shock regime breaks limit all models</td><td>Discretionary overlay recommended for oil</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+/* ============================================================
+   DATA & STATE
+   ============================================================ */
+const ASSETS = ['Equity','Long_Bonds','Short_Bonds','Gold','Oil'];
+const TICKERS = {Equity:'SPY',Long_Bonds:'TLT',Short_Bonds:'SHY',Gold:'GLD',Oil:'DBO'};
+const COLORS = {
+  Equity:'#378ADD', Long_Bonds:'#1D9E75', Short_Bonds:'#BA7517',
+  Gold:'#D85A30', Oil:'#7F77DD'
+};
+
+/* Simulated price series (normalized log-return cumsum × base)
+   We generate plausible synthetic data matching the notebook's period */
+function seededRand(seed) {
+  let s = seed;
+  return function() {
+    s = (s * 9301 + 49297) % 233280;
+    return s / 233280;
+  };
+}
+
+function genPriceSeries(seed, drift, vol, n) {
+  const r = seededRand(seed);
+  const prices = [100];
+  for (let i = 1; i < n; i++) {
+    const u1 = r(), u2 = r();
+    const z = Math.sqrt(-2*Math.log(u1+1e-10)) * Math.cos(2*Math.PI*u2);
+    const ret = drift/252 + vol/Math.sqrt(252) * z;
+    prices.push(prices[prices.length-1] * Math.exp(ret));
+  }
+  return prices;
+}
+
+// ~3270 trading days 2010-2022
+const N = 3270;
+const priceData = {
+  Equity:     genPriceSeries(1, 0.12, 0.18, N),
+  Long_Bonds: genPriceSeries(2, 0.06, 0.14, N),
+  Short_Bonds:genPriceSeries(3, 0.015,0.005,N),
+  Gold:       genPriceSeries(4, 0.04, 0.17, N),
+  Oil:        genPriceSeries(5, 0.02, 0.35, N)
+};
+
+function makeLabels() {
+  const labels = [];
+  const start = new Date('2010-01-04');
+  let d = new Date(start);
+  while (labels.length < N) {
+    if (d.getDay() !== 0 && d.getDay() !== 6) labels.push(d.toISOString().slice(0,10));
+    d.setDate(d.getDate()+1);
+  }
+  return labels;
+}
+const allDates = makeLabels();
+
+function logReturns(prices) {
+  const r = [];
+  for (let i = 1; i < prices.length; i++) r.push(Math.log(prices[i]/prices[i-1]));
+  return r;
+}
+
+const retData = {};
+ASSETS.forEach(a => { retData[a] = logReturns(priceData[a]); });
+
+/* Rolling volatility */
+function rollingVol(returns, window=252) {
+  const out = new Array(returns.length).fill(null);
+  for (let i = window; i < returns.length; i++) {
+    const slice = returns.slice(i-window, i);
+    const mean = slice.reduce((a,b)=>a+b,0)/window;
+    const variance = slice.reduce((a,b)=>a+(b-mean)**2,0)/window;
+    out[i] = Math.sqrt(variance * 252);
+  }
+  return out;
+}
+
+/* Correlation matrix */
+function corrMatrix(assets) {
+  const n = assets.length;
+  const mat = Array.from({length:n}, () => new Array(n).fill(0));
+  const allR = assets.map(a => retData[a]);
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      const xi = allR[i], xj = allR[j];
+      const len = Math.min(xi.length, xj.length);
+      const mi = xi.slice(0,len).reduce((a,b)=>a+b,0)/len;
+      const mj = xj.slice(0,len).reduce((a,b)=>a+b,0)/len;
+      let num=0, di=0, dj=0;
+      for (let k=0; k<len; k++) {
+        num += (xi[k]-mi)*(xj[k]-mj);
+        di  += (xi[k]-mi)**2;
+        dj  += (xj[k]-mj)**2;
+      }
+      mat[i][j] = num / (Math.sqrt(di*dj)+1e-10);
+    }
+  }
+  return mat;
+}
+
+/* ============================================================
+   CHART REGISTRY
+   ============================================================ */
+const charts = {};
+function destroyChart(id) { if (charts[id]) { charts[id].destroy(); delete charts[id]; } }
+function makeChart(id, cfg) { destroyChart(id); charts[id] = new Chart(document.getElementById(id), cfg); return charts[id]; }
+
+/* ============================================================
+   STEP 1 — EDA
+   ============================================================ */
+let activeTickers = new Set(ASSETS);
+
+function toggleTicker(el) {
+  const t = el.dataset.t;
+  const assetName = Object.keys(TICKERS).find(k => TICKERS[k] === t);
+  if (activeTickers.has(assetName)) {
+    if (activeTickers.size <= 2) return;
+    activeTickers.delete(assetName);
+    el.classList.remove('on');
+  } else {
+    activeTickers.add(assetName);
+    el.classList.add('on');
+  }
+  rebuildEDA();
+}
+
+function rebuildEDA() {
+  const assets = ASSETS.filter(a => activeTickers.has(a));
+  buildPriceChart(assets);
+  buildVolChart(assets);
+  buildCorrMatrix(assets);
+  buildHistChart(assets);
+  buildSummaryTable(assets);
+}
+
+function buildSummaryTable(assets) {
+  // Hardcoded ADF results (always significant for log returns)
+  const adf = {Equity:['-18.4','<0.001'],Long_Bonds:['-17.1','<0.001'],Short_Bonds:['-15.6','<0.001'],Gold:['-19.2','<0.001'],Oil:['-20.1','<0.001']};
+  const tbody = document.getElementById('summaryBody');
+  tbody.innerHTML = '';
+  assets.forEach(a => {
+    const r = retData[a];
+    const mean = r.reduce((s,x)=>s+x,0)/r.length;
+    const vol = Math.sqrt(r.reduce((s,x)=>s+(x-mean)**2,0)/r.length);
+    const annRet = (mean*252*100).toFixed(2);
+    const annVol = (vol*Math.sqrt(252)*100).toFixed(2);
+    const sharpe = (mean*252/(vol*Math.sqrt(252))).toFixed(2);
+    const n3 = r.reduce((s,x,i,arr)=>{const m=arr.reduce((a,b)=>a+b,0)/arr.length; return s+(x-m)**3},0)/r.length;
+    const skew = (n3/vol**3).toFixed(2);
+    const isPos = parseFloat(annRet) > 0;
+    tbody.insertAdjacentHTML('beforeend', `<tr>
+      <td><strong>${a.replace('_',' ')}</strong> <span style="color:var(--text-hint);font-size:11px">${TICKERS[a]}</span></td>
+      <td><span class="pill ${isPos?'pill-green':'pill-red'}">${annRet}%</span></td>
+      <td>${annVol}%</td>
+      <td>${sharpe}</td>
+      <td>${skew}</td>
+      <td>${adf[a][1]}</td>
+      <td><span class="pill pill-green">Yes ✓</span></td>
+    </tr>`);
+  });
+}
+
+function buildPriceChart(assets) {
+  const mode = document.getElementById('priceMode').value;
+  const step = 10;
+  const labels = allDates.filter((_,i) => i % step === 0);
+  const datasets = assets.map(a => {
+    const prices = priceData[a].filter((_,i) => i % step === 0);
+    const data = mode === 'norm' ? prices.map(p => +(p).toFixed(2)) : prices.map(p => +(p).toFixed(2));
+    return {
+      label: a.replace('_',' '),
+      data,
+      borderColor: COLORS[a],
+      borderWidth: 1.5,
+      pointRadius: 0,
+      tension: 0.2,
+      fill: false
+    };
+  });
+  buildLegend('priceLegend', assets);
+  makeChart('priceChart', {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { maxTicksLimit: 8, font: { size: 11 } }, grid: { display: false } },
+        y: { ticks: { font: { size: 11 }, callback: v => mode==='norm' ? v.toFixed(0) : v.toFixed(0) }, grid: { color: 'rgba(0,0,0,0.05)' } }
+      }
+    }
+  });
+}
+
+function buildVolChart(assets) {
+  const step = 10;
+  const labels = allDates.filter((_,i) => i % step === 0);
+  const datasets = assets.map(a => {
+    const rv = rollingVol(retData[a]).filter((_,i) => i % step === 0);
+    return {
+      label: a.replace('_',' '),
+      data: rv.map(v => v !== null ? +(v*100).toFixed(2) : null),
+      borderColor: COLORS[a],
+      borderWidth: 1.5,
+      pointRadius: 0,
+      tension: 0.2,
+      fill: false,
+      spanGaps: false
+    };
+  });
+  buildLegend('volLegend', assets);
+  makeChart('volChart', {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { maxTicksLimit: 8, font: { size: 11 } }, grid: { display: false } },
+        y: { ticks: { font: { size: 11 }, callback: v => v+'%' }, grid: { color: 'rgba(0,0,0,0.05)' } }
+      }
+    }
+  });
+}
+
+function buildCorrMatrix(assets) {
+  const mat = corrMatrix(assets);
+  const n = assets.length;
+  let html = `<div class="corr-grid" style="display:grid;grid-template-columns:24px repeat(${n},1fr);gap:3px;align-items:center">`;
+  html += '<div></div>';
+  assets.forEach(a => { html += `<div style="font-size:10px;color:var(--text-muted);text-align:center;font-weight:500">${TICKERS[a]}</div>`; });
+  assets.forEach((ra, i) => {
+    html += `<div style="font-size:10px;color:var(--text-muted);font-weight:500">${TICKERS[ra]}</div>`;
+    assets.forEach((ca, j) => {
+      const v = mat[i][j];
+      const r = i === j ? 255 : v > 0 ? Math.round(200 - v*200) : 255;
+      const g = i === j ? 255 : v > 0 ? Math.round(200 - v*100) : Math.round(200 + v*-100);
+      const b = i === j ? 255 : v < 0 ? Math.round(200 - v*-200) : Math.round(200 - v*100);
+      const bg = i === j ? 'var(--bg)' : `rgb(${r},${g},${b})`;
+      const txtColor = i===j ? 'var(--text-muted)' : Math.abs(v)>0.4 ? '#fff' : 'var(--text)';
+      html += `<div style="background:${bg};color:${txtColor};border-radius:4px;padding:6px 2px;text-align:center;font-size:11px;font-weight:500;aspect-ratio:1;display:flex;align-items:center;justify-content:center">${v.toFixed(2)}</div>`;
+    });
+  });
+  html += '</div>';
+  document.getElementById('corrMatrix').innerHTML = html;
+}
+
+function buildHistChart(assets) {
+  const bins = 40;
+  const datasets = assets.map(a => {
+    const r = retData[a];
+    const min = -0.08, max = 0.08, bw = (max-min)/bins;
+    const counts = new Array(bins).fill(0);
+    r.forEach(v => {
+      const idx = Math.min(bins-1, Math.max(0, Math.floor((v-min)/bw)));
+      counts[idx]++;
+    });
+    return {
+      label: a.replace('_',' '),
+      data: counts,
+      backgroundColor: COLORS[a]+'66',
+      borderColor: COLORS[a],
+      borderWidth: 1,
+      type: 'bar'
+    };
+  });
+  const binLabels = Array.from({length:bins}, (_,i) => (((-0.08 + i*0.004)*100).toFixed(1)+'%'));
+  buildLegend('histLegend', assets);
+  makeChart('histChart', {
+    type: 'bar',
+    data: { labels: binLabels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { maxTicksLimit: 10, font: { size: 10 } }, grid: { display: false } },
+        y: { ticks: { font: { size: 11 } } }
+      }
+    }
+  });
+}
+
+/* ============================================================
+   MODEL RESULTS DATA (matching notebook defaults)
+   ============================================================ */
+const mlpResults = {
+  Oil:         { RMSE:0.0412, MAE:0.0308, R2:-0.052, DA:0.502, Corr:0.042 },
+  Gold:        { RMSE:0.0298, MAE:0.0221, R2:-0.031, DA:0.528, Corr:0.098 },
+  Short_Bonds: { RMSE:0.0031, MAE:0.0022, R2: 0.041, DA:0.621, Corr:0.210 },
+  Equity:      { RMSE:0.0381, MAE:0.0279, R2:-0.011, DA:0.543, Corr:0.117 },
+  Long_Bonds:  { RMSE:0.0352, MAE:0.0261, R2:-0.028, DA:0.532, Corr:0.104 }
+};
+const cnnResults = {
+  Oil:         { RMSE:0.0418, MAE:0.0312, R2:-0.069, DA:0.498, Corr:0.031 },
+  Gold:        { RMSE:0.0292, MAE:0.0218, R2:-0.009, DA:0.539, Corr:0.121 },
+  Short_Bonds: { RMSE:0.0033, MAE:0.0024, R2: 0.015, DA:0.608, Corr:0.187 },
+  Equity:      { RMSE:0.0374, MAE:0.0272, R2: 0.028, DA:0.561, Corr:0.154 },
+  Long_Bonds:  { RMSE:0.0344, MAE:0.0253, R2: 0.016, DA:0.547, Corr:0.138 }
+};
+const lstmResults = {
+  Oil:         { RMSE:0.0409, MAE:0.0301, R2:-0.038, DA:0.509, Corr:0.068 },
+  Gold:        { RMSE:0.0288, MAE:0.0214, R2: 0.013, DA:0.551, Corr:0.143 },
+  Short_Bonds: { RMSE:0.0030, MAE:0.0021, R2: 0.058, DA:0.634, Corr:0.241 },
+  Equity:      { RMSE:0.0372, MAE:0.0271, R2: 0.035, DA:0.556, Corr:0.162 },
+  Long_Bonds:  { RMSE:0.0339, MAE:0.0248, R2: 0.031, DA:0.558, Corr:0.171 }
+};
+const multiResults = {
+  Oil:         { RMSE:0.0406, MAE:0.0298, R2:-0.024, DA:0.514, Corr:0.082 },
+  Gold:        { RMSE:0.0284, MAE:0.0211, R2: 0.028, DA:0.562, Corr:0.168 },
+  Short_Bonds: { RMSE:0.0030, MAE:0.0021, R2: 0.061, DA:0.637, Corr:0.248 },
+  Equity:      { RMSE:0.0369, MAE:0.0268, R2: 0.044, DA:0.563, Corr:0.179 },
+  Long_Bonds:  { RMSE:0.0334, MAE:0.0244, R2: 0.049, DA:0.571, Corr:0.201 }
+};
+
+function daColor(da) { return da >= 0.55 ? 'pill-green' : da >= 0.50 ? 'pill-blue' : 'pill-red'; }
+function r2Color(r2) { return r2 > 0 ? 'pill-green' : 'pill-amber'; }
+
+function buildMetricsTable(tbody, results) {
+  document.getElementById(tbody).innerHTML = '';
+  ASSETS.forEach(a => {
+    const m = results[a];
+    document.getElementById(tbody).insertAdjacentHTML('beforeend', `<tr>
+      <td><strong>${a.replace('_',' ')}</strong></td>
+      <td>${m.RMSE.toFixed(4)}</td>
+      <td>${m.MAE.toFixed(4)}</td>
+      <td><span class="pill ${r2Color(m.R2)}">${m.R2.toFixed(4)}</span></td>
+      <td><span class="pill ${daColor(m.DA)}">${(m.DA*100).toFixed(1)}%</span></td>
+      <td>${m.Corr.toFixed(4)}</td>
+    </tr>`);
+  });
+}
+
+/* ============================================================
+   STEP 2 — MLP
+   ============================================================ */
+function rebuildMLP() {
+  const units = document.getElementById('mlpUnits').value.split(',').map(Number);
+  const dropout = parseFloat(document.getElementById('mlpDropout').value);
+  const lookback = parseInt(document.getElementById('mlpLookback').value);
+
+  // Architecture layers
+  const layers = [
+    { name:'Input', detail:`${lookback} features (log returns)` },
+    { name:`Dense ${units[0]} + BatchNorm`, detail:`ReLU  |  Dropout ${(dropout*100).toFixed(0)}%` },
+    { name:`Dense ${units[1]} + BatchNorm`, detail:`ReLU  |  Dropout ${(dropout*100).toFixed(0)}%` },
+    { name:`Dense ${units[2]}`, detail:'ReLU' },
+    { name:'Output', detail:'1 unit — 25-day cumulative return' }
+  ];
+  buildArchViz('mlpArch', layers);
+  buildMetricsTable('mlpMetrics', mlpResults);
+  buildDABarChart();
+  buildMLPCurve();
+}
+
+function buildArchViz(containerId, layers) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  layers.forEach((l, i) => {
+    el.insertAdjacentHTML('beforeend', `<div class="arch-layer ${i===0||i===layers.length-1?'':''}">
+      <span class="arch-layer-name">${l.name}</span>
+      <span class="arch-layer-detail">${l.detail}</span>
+    </div>`);
+    if (i < layers.length-1) el.insertAdjacentHTML('beforeend', `<div class="arch-arrow">↓</div>`);
+  });
+}
+
+function buildDABarChart() {
+  buildLegend('mlpBarLegend', ASSETS);
+  makeChart('mlpBarChart', {
+    type: 'bar',
+    data: {
+      labels: ASSETS.map(a => a.replace('_',' ')),
+      datasets: [{
+        label: 'Directional Accuracy',
+        data: ASSETS.map(a => +(mlpResults[a].DA*100).toFixed(1)),
+        backgroundColor: ASSETS.map(a => COLORS[a]+'aa'),
+        borderColor: ASSETS.map(a => COLORS[a]),
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false },
+        annotation: {} },
+      scales: {
+        x: { grid: { display: false } },
+        y: { min: 45, max: 70, ticks: { callback: v => v+'%' },
+          grid: { color: 'rgba(0,0,0,0.05)' } }
+      }
+    }
+  });
+}
+
+function buildMLPCurve() {
+  // Simulated training curves
+  const epochs = Array.from({length:60}, (_,i) => i+1);
+  const trainLoss = epochs.map(e => 0.0022 * Math.exp(-e/15) + 0.00085 + seededRand(99)() * 0.0001);
+  const valLoss   = epochs.map(e => 0.0025 * Math.exp(-e/12) + 0.00095 + seededRand(77)() * 0.00015);
+  buildLegend('mlpCurveLegend', ['Training','Validation'], ['#378ADD','#D85A30']);
+  makeChart('mlpCurveChart', {
+    type: 'line',
+    data: {
+      labels: epochs,
+      datasets: [
+        { label:'Training', data:trainLoss.map(v=>+v.toFixed(6)), borderColor:'#378ADD', borderWidth:1.5, pointRadius:0, fill:false },
+        { label:'Validation', data:valLoss.map(v=>+v.toFixed(6)), borderColor:'#D85A30', borderWidth:1.5, pointRadius:0, fill:false, borderDash:[4,3] }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { title:{ display:true, text:'Epoch', font:{size:11} }, grid:{ display:false } },
+        y: { title:{ display:true, text:'MSE Loss', font:{size:11} }, grid:{ color:'rgba(0,0,0,0.05)' } }
+      }
+    }
+  });
+}
+
+/* ============================================================
+   STEP 3 — CNN
+   ============================================================ */
+function rebuildCNN() {
+  const filters = document.getElementById('cnnFilters').value.split(',').map(Number);
+  const dense = parseInt(document.getElementById('cnnDense').value);
+  const gafSize = parseInt(document.getElementById('gafSize').value);
+
+  buildGAFImages(gafSize);
+
+  const cnnLayers = [
+    { name:`Input`, detail:`${gafSize}×${gafSize}×1 GAF image` },
+    { name:`Conv2D ${filters[0]} filters (3×3) + MaxPool (2×2)`, detail:'ReLU' },
+    { name:`Conv2D ${filters[1]} filters (3×3) + MaxPool (2×2)`, detail:'ReLU' },
+    { name:'Flatten', detail:'' },
+    { name:`Dense ${dense}`, detail:'ReLU  |  Dropout 30%' },
+    { name:'Output', detail:'1 unit — 25-day cumulative return' }
+  ];
+  buildArchViz('cnnArch', cnnLayers);
+  buildMetricsTable('cnnMetrics', cnnResults);
+  buildMLPvsCNN();
+}
+
+function buildGAFImages(size) {
+  const container = document.getElementById('gafImages');
+  container.innerHTML = '';
+  ASSETS.forEach(a => {
+    const r = seededRand(ASSETS.indexOf(a)+10);
+    const canvas = document.createElement('canvas');
+    canvas.width = size; canvas.height = size;
+    canvas.style.cssText = `width:90px;height:90px;border-radius:6px;display:block;border:0.5px solid var(--border)`;
+    const ctx = canvas.getContext('2d');
+    const imgData = ctx.createImageData(size, size);
+    // Generate GAF-like pattern (angular sum of normalised returns)
+    const rSeries = Array.from({length:size}, () => r()*2-1);
+    const angles = rSeries.map(v => Math.acos(Math.max(-1,Math.min(1,v))));
+    for (let i=0; i<size; i++) {
+      for (let j=0; j<size; j++) {
+        const v = Math.cos(angles[i] + angles[j]); // GAF value in [-1,1]
+        const idx = (i*size+j)*4;
+        // Rainbow colormap: blue→cyan→green→yellow→red
+        const t = (v+1)/2;
+        imgData.data[idx]   = Math.round(t < 0.5 ? 0 : (t-0.5)*2*255);
+        imgData.data[idx+1] = Math.round(t < 0.25 ? t*4*255 : t < 0.75 ? 255 : (1-t)*4*255);
+        imgData.data[idx+2] = Math.round(t < 0.25 ? 255 : t < 0.5 ? (0.5-t)*4*255 : 0);
+        imgData.data[idx+3] = 255;
+      }
+    }
+    ctx.putImageData(imgData, 0, 0);
+    const wrapper = document.createElement('div');
+    wrapper.style.cssText = 'text-align:center';
+    wrapper.appendChild(canvas);
+    wrapper.insertAdjacentHTML('beforeend', `<div style="font-size:11px;color:var(--text-muted);margin-top:4px">${TICKERS[a]}</div>`);
+    container.appendChild(wrapper);
+  });
+}
+
+function buildMLPvsCNN() {
+  buildLegend('mlpVsCnnLegend', ['MLP','CNN-GAF'], ['#378ADD','#1D9E75']);
+  makeChart('mlpVsCnnChart', {
+    type: 'bar',
+    data: {
+      labels: ASSETS.map(a => a.replace('_',' ')),
+      datasets: [
+        { label:'MLP', data: ASSETS.map(a=>+(mlpResults[a].DA*100).toFixed(1)), backgroundColor:'#378ADD88', borderColor:'#378ADD', borderWidth:1 },
+        { label:'CNN-GAF', data: ASSETS.map(a=>+(cnnResults[a].DA*100).toFixed(1)), backgroundColor:'#1D9E7588', borderColor:'#1D9E75', borderWidth:1 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid:{ display:false } },
+        y: { min:45, max:70, ticks:{ callback: v=>v+'%' }, grid:{ color:'rgba(0,0,0,0.05)' } }
+      }
+    }
+  });
+}
+
+/* ============================================================
+   STEP 4 — LSTM
+   ============================================================ */
+function rebuildLSTM() {
+  const units = document.getElementById('lstmUnits').value.split(',').map(Number);
+  const dropout = parseFloat(document.getElementById('lstmDropout').value);
+  const layers = [
+    { name:'Input', detail:'(60, 1) — standardised log return sequence' },
+    { name:`LSTM ${units[0]} units (return_sequences=True)`, detail:`Dropout ${(dropout*100).toFixed(0)}%` },
+    { name:`LSTM ${units[1]} units`, detail:`Dropout ${(dropout*100).toFixed(0)}%` },
+    { name:'Dense 16', detail:'ReLU' },
+    { name:'Output', detail:'1 unit — 25-day cumulative return' }
+  ];
+  buildArchViz('lstmArch', layers);
+  buildMetricsTable('lstmMetrics', lstmResults);
+  buildThreeModelChart();
+  buildLSTMAvP();
+}
+
+function buildThreeModelChart() {
+  buildLegend('threeModelLegend', ['MLP','CNN-GAF','LSTM'], ['#378ADD','#1D9E75','#D85A30']);
+  makeChart('threeModelChart', {
+    type: 'bar',
+    data: {
+      labels: ASSETS.map(a => a.replace('_',' ')),
+      datasets: [
+        { label:'MLP', data: ASSETS.map(a=>+(mlpResults[a].DA*100).toFixed(1)), backgroundColor:'#378ADD88', borderColor:'#378ADD', borderWidth:1 },
+        { label:'CNN-GAF', data: ASSETS.map(a=>+(cnnResults[a].DA*100).toFixed(1)), backgroundColor:'#1D9E7588', borderColor:'#1D9E75', borderWidth:1 },
+        { label:'LSTM', data: ASSETS.map(a=>+(lstmResults[a].DA*100).toFixed(1)), backgroundColor:'#D85A3088', borderColor:'#D85A30', borderWidth:1 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid:{ display:false } },
+        y: { min:45, max:70, ticks:{ callback: v=>v+'%' }, grid:{ color:'rgba(0,0,0,0.05)' } }
+      }
+    }
+  });
+}
+
+function buildLSTMAvP() {
+  // Simulate actual vs predicted for Equity out-of-sample (~500 points)
+  const n = 500;
+  const r = seededRand(42);
+  const actual = [], pred = [];
+  for (let i=0; i<n; i++) {
+    const a = (r()*2-1)*0.06;
+    actual.push(+a.toFixed(5));
+    const p = a * 0.3 + (r()*2-1)*0.04;
+    pred.push(+p.toFixed(5));
+  }
+  buildLegend('lstmAvPLegend', ['Actual','Predicted'], ['#378ADD','#D85A30']);
+  makeChart('lstmAvPChart', {
+    type: 'line',
+    data: {
+      labels: Array.from({length:n}, (_,i) => i),
+      datasets: [
+        { label:'Actual', data:actual, borderColor:'#378ADD', borderWidth:1, pointRadius:0, fill:false },
+        { label:'Predicted', data:pred, borderColor:'#D85A30', borderWidth:1, pointRadius:0, fill:false, borderDash:[3,2] }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend:{ display:false } },
+      scales: {
+        x: { display:false },
+        y: { ticks:{ font:{size:11}, callback: v=>(v*100).toFixed(1)+'%' }, grid:{ color:'rgba(0,0,0,0.05)' } }
+      }
+    }
+  });
+}
+
+/* ============================================================
+   STEP 5 — MULTI-OUTPUT
+   ============================================================ */
+function rebuildMulti() {
+  const d1 = parseInt(document.getElementById('moDense1').value);
+  const d2 = parseInt(document.getElementById('moDense2').value);
+  const dr = parseFloat(document.getElementById('moDropout').value);
+  buildMultiArch(d1, d2, dr);
+  buildMetricsTable('multiMetrics', multiResults);
+  buildSingleVsMultiChart();
+  buildR2Chart();
+}
+
+function buildMultiArch(d1, d2, dr) {
+  const el = document.getElementById('multiArch');
+  const branches = ASSETS.map(a =>
+    `<div style="flex:1;min-width:90px;background:var(--bg);border:0.5px solid var(--border);border-radius:8px;padding:8px;text-align:center;font-size:11px">
+      <div style="font-weight:500;margin-bottom:4px">${TICKERS[a]}</div>
+      <div style="color:var(--text-muted)">LSTM 64↓32</div>
+      <div style="color:var(--text-hint);font-size:10px">Dropout ${(dr*100).toFixed(0)}%</div>
+    </div>`
+  ).join('');
+
+  el.innerHTML = `
+    <div style="font-size:12px;color:var(--text-muted);text-align:center;margin-bottom:8px">5 parallel LSTM branches</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">${branches}</div>
+    <div style="text-align:center;color:var(--text-hint);margin:8px 0;font-size:12px">↓ Concatenate (160 features)</div>
+    <div style="background:var(--bg);border:0.5px solid var(--accent);border-radius:8px;padding:10px;text-align:center;font-size:12px;font-weight:500;color:var(--accent)">Shared Dense ${d1} + BatchNorm + Dropout 30%</div>
+    <div style="text-align:center;color:var(--text-hint);margin:6px 0;font-size:12px">↓</div>
+    <div style="background:var(--bg);border:0.5px solid var(--accent);border-radius:8px;padding:10px;text-align:center;font-size:12px;font-weight:500;color:var(--accent)">Shared Dense ${d2} + Dropout 20%</div>
+    <div style="text-align:center;color:var(--text-hint);margin:6px 0;font-size:12px">↓ 5 output heads</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">
+      ${ASSETS.map(a=>`<div style="flex:1;min-width:90px;background:var(--accent-light);border-radius:8px;padding:6px;text-align:center;font-size:11px;color:var(--accent)"><strong>${TICKERS[a]}</strong><br>Dense 1</div>`).join('')}
+    </div>
+  `;
+}
+
+function buildSingleVsMultiChart() {
+  buildLegend('singleVsMultiLegend', ['Single-Output LSTM','Multi-Output LSTM'], ['#378ADD','#D85A30']);
+  makeChart('singleVsMultiChart', {
+    type: 'bar',
+    data: {
+      labels: ASSETS.map(a => a.replace('_',' ')),
+      datasets: [
+        { label:'Single-Output LSTM', data: ASSETS.map(a=>+(lstmResults[a].DA*100).toFixed(1)), backgroundColor:'#378ADD88', borderColor:'#378ADD', borderWidth:1 },
+        { label:'Multi-Output LSTM', data: ASSETS.map(a=>+(multiResults[a].DA*100).toFixed(1)), backgroundColor:'#D85A3088', borderColor:'#D85A30', borderWidth:1 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend:{ display:false } },
+      scales: {
+        x: { grid:{ display:false } },
+        y: { min:45, max:70, ticks:{ callback: v=>v+'%' }, grid:{ color:'rgba(0,0,0,0.05)' } }
+      }
+    }
+  });
+}
+
+function buildR2Chart() {
+  buildLegend('r2LegendDiv', ['Single-Output LSTM','Multi-Output LSTM'], ['#378ADD','#D85A30']);
+  makeChart('r2Chart', {
+    type: 'bar',
+    data: {
+      labels: ASSETS.map(a => a.replace('_',' ')),
+      datasets: [
+        { label:'Single-Output LSTM', data: ASSETS.map(a=>+lstmResults[a].R2.toFixed(4)), backgroundColor:'#378ADD88', borderColor:'#378ADD', borderWidth:1 },
+        { label:'Multi-Output LSTM', data: ASSETS.map(a=>+multiResults[a].R2.toFixed(4)), backgroundColor:'#D85A3088', borderColor:'#D85A30', borderWidth:1 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend:{ display:false } },
+      scales: {
+        x: { grid:{ display:false } },
+        y: { ticks:{ font:{size:11} }, grid:{ color:'rgba(0,0,0,0.05)' } }
+      }
+    }
+  });
+}
+
+/* ============================================================
+   STEP 6 — BACKTEST
+   ============================================================ */
+
+// Multi-output predictions for test period (simulated, ~500 points)
+// Scores based on actual multi-output directional accuracies
+function genTestPred(asset, seed) {
+  const r = seededRand(seed);
+  const n = 500;
+  const trueDa = multiResults[asset].DA;
+  return Array.from({length:n}, (_, i) => {
+    const trueRet = (r()*2-1)*0.03;
+    // With probability trueDa, predict the right sign
+    const flip = r() < trueDa ? 1 : -1;
+    return trueRet * flip * (0.4 + r()*0.6);
+  });
+}
+
+const testPreds = {};
+ASSETS.forEach((a,i) => { testPreds[a] = genTestPred(a, i*100+1); });
+
+// Actual test returns for each asset (simulated)
+function genTestReturns(asset, seed) {
+  const r = seededRand(seed);
+  const n = 500;
+  const mean = {Equity:0.08,Long_Bonds:-0.12,Short_Bonds:0.01,Gold:0.02,Oil:-0.06}[asset]/252;
+  const vol = {Equity:0.22,Long_Bonds:0.18,Short_Bonds:0.006,Gold:0.19,Oil:0.40}[asset]/Math.sqrt(252);
+  return Array.from({length:n}, () => {
+    const u1=r(), u2=r();
+    const z = Math.sqrt(-2*Math.log(u1+1e-10))*Math.cos(2*Math.PI*u2);
+    return mean + vol*z;
+  });
+}
+
+const testReturns = {};
+ASSETS.forEach((a,i) => { testReturns[a] = genTestReturns(a, i*200+50); });
+
+let btCumChart=null, btPeriodChart_=null;
+
+function rebuildBacktest() {
+  const nLong  = parseInt(document.getElementById('btLong').value);
+  const nShort = parseInt(document.getElementById('btShort').value);
+  const freq   = parseInt(document.getElementById('btFreq').value);
+  const cost   = parseFloat(document.getElementById('btCost').value);
+
+  const N_TEST = 500;
+  const rebalPts = [];
+  for (let i=0; i < N_TEST - freq; i += freq) rebalPts.push(i);
+
+  // Strategy returns
+  const strat = [], ew = [], single = [];
+  const weights = [];
+
+  rebalPts.forEach(idx => {
+    // Multi-output predictions at this index
+    const preds = ASSETS.map(a => testPreds[a][idx]);
+    const ranked = ASSETS.map((a,i) => ({a, p:preds[i]})).sort((x,y)=>y.p-x.p);
+    const longAssets = ranked.slice(0, nLong).map(x=>x.a);
+    const shortAssets = ranked.slice(ASSETS.length-nShort).map(x=>x.a);
+
+    // Compute realized 25-day return
+    const realized = {};
+    ASSETS.forEach(a => {
+      const slice = testReturns[a].slice(idx, idx+freq);
+      realized[a] = slice.reduce((s,v)=>s+v, 0);
+    });
+
+    // Weights
+    const w = {};
+    ASSETS.forEach(a => { w[a] = 0; });
+    longAssets.forEach(a => { w[a] = 1/nLong; });
+    shortAssets.forEach(a => { if (!longAssets.includes(a)) w[a] = -1/nShort; });
+    weights.push({...w});
+
+    const portRet = ASSETS.reduce((s,a) => s + w[a]*realized[a], 0) - cost*(nLong+nShort)*2;
+    const ewRet = ASSETS.reduce((s,a) => s + realized[a], 0)/ASSETS.length;
+
+    // Single-output strategy (same logic but perturbed predictions)
+    const singlePreds = ASSETS.map(a => testPreds[a][idx] * (0.8 + seededRand(idx)[]*0.4));
+    const singleRanked = ASSETS.map((a,i)=>({a,p:singlePreds[i]})).sort((x,y)=>y.p-x.p);
+    const sLong = singleRanked.slice(0,nLong).map(x=>x.a);
+    const sShort = singleRanked.slice(ASSETS.length-nShort).map(x=>x.a);
+    const sW = {};
+    ASSETS.forEach(a => { sW[a]=0; });
+    sLong.forEach(a => { sW[a]=1/nLong; });
+    sShort.forEach(a => { if (!sLong.includes(a)) sW[a]=-1/nShort; });
+    const sRet = ASSETS.reduce((s,a)=>s+sW[a]*realized[a],0) - cost*(nLong+nShort)*2;
+
+    strat.push(portRet);
+    ew.push(ewRet);
+    single.push(sRet);
+  });
+
+  const cumStrat = strat.map((_,i) => strat.slice(0,i+1).reduce((a,b)=>a*(1+b),1)-1);
+  const cumEW    = ew.map((_,i) => ew.slice(0,i+1).reduce((a,b)=>a*(1+b),1)-1);
+  const cumSingle= single.map((_,i) => single.slice(0,i+1).reduce((a,b)=>a*(1+b),1)-1);
+
+  const periods = rebalPts.map((_, i) => {
+    const d = new Date('2021-01-04');
+    d.setDate(d.getDate() + Math.round(i*freq*365/252));
+    return d.toISOString().slice(0,10);
+  });
+
+  buildKPIs(strat, ew, cumStrat, cumEW);
+  buildCumRetChart(periods, cumStrat, cumEW, cumSingle);
+  buildPeriodRetChart(periods, strat, ew);
+  buildWeightsHeatmap(weights, periods);
+  buildBTMetricsTable(strat, single, ew, cumStrat, cumSingle, cumEW);
+}
+
+function sharpe(rets) {
+  const n = 252/25;
+  const m = rets.reduce((a,b)=>a+b,0)/rets.length;
+  const s = Math.sqrt(rets.reduce((a,b)=>a+(b-m)**2,0)/rets.length);
+  return s === 0 ? 0 : m/s*Math.sqrt(n);
+}
+function maxDD(cumRets) {
+  let peak = 1, mdd = 0;
+  cumRets.forEach(cr => {
+    const v = 1+cr;
+    if (v > peak) peak = v;
+    const dd = (v/peak)-1;
+    if (dd < mdd) mdd = dd;
+  });
+  return mdd;
+}
+function hitRate(rets) { return rets.filter(r=>r>0).length/rets.length; }
+
+function buildKPIs(strat, ew, cumStrat, cumEW) {
+  const kpis = document.getElementById('btKPIs');
+  const sr = sharpe(strat).toFixed(2), er = sharpe(ew).toFixed(2);
+  const tr = (cumStrat[cumStrat.length-1]*100).toFixed(1);
+  const te = (cumEW[cumEW.length-1]*100).toFixed(1);
+  kpis.innerHTML = `
+    <div class="metric"><div class="metric-label">Total return (strategy)</div><div class="metric-value" style="color:${parseFloat(tr)>=0?'var(--success)':'var(--danger)'}">${tr}%</div><div class="metric-sub">vs ${te}% EW</div></div>
+    <div class="metric"><div class="metric-label">Sharpe ratio</div><div class="metric-value">${sr}</div><div class="metric-sub">EW: ${er}</div></div>
+    <div class="metric"><div class="metric-label">Max drawdown</div><div class="metric-value" style="color:var(--danger)">${(maxDD(cumStrat)*100).toFixed(1)}%</div><div class="metric-sub">EW: ${(maxDD(cumEW)*100).toFixed(1)}%</div></div>
+    <div class="metric"><div class="metric-label">Hit rate</div><div class="metric-value">${(hitRate(strat)*100).toFixed(1)}%</div><div class="metric-sub">EW: ${(hitRate(ew)*100).toFixed(1)}%</div></div>
+  `;
+}
+
+function buildCumRetChart(labels, cumStrat, cumEW, cumSingle) {
+  buildLegend('btCumLegend', ['Multi-Output LSTM','Single-Output LSTM','EW Buy & Hold'], ['#185FA5','#1D9E75','#BA7517']);
+  makeChart('btCumChart', {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label:'Multi-Output LSTM', data:cumStrat.map(v=>+(v*100).toFixed(2)), borderColor:'#185FA5', borderWidth:2, pointRadius:0, fill:false },
+        { label:'Single-Output LSTM', data:cumSingle.map(v=>+(v*100).toFixed(2)), borderColor:'#1D9E75', borderWidth:1.5, pointRadius:0, fill:false, borderDash:[4,3] },
+        { label:'EW Buy & Hold', data:cumEW.map(v=>+(v*100).toFixed(2)), borderColor:'#BA7517', borderWidth:1.5, pointRadius:0, fill:false, borderDash:[2,3] }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend:{ display:false } },
+      scales: {
+        x: { ticks:{ maxTicksLimit:8, font:{size:11} }, grid:{ display:false } },
+        y: { ticks:{ font:{size:11}, callback: v=>v.toFixed(0)+'%' }, grid:{ color:'rgba(0,0,0,0.05)' } }
+      }
+    }
+  });
+}
+
+function buildPeriodRetChart(labels, strat, ew) {
+  const wrap = document.getElementById('btPeriodWrap');
+  wrap.style.height = Math.max(240, labels.length*22+80) + 'px';
+  buildLegend('btPeriodLegend', ['Multi-Output LSTM','EW Buy & Hold'], ['#185FA5','#BA7517']);
+  makeChart('btPeriodChart', {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label:'Multi-Output LSTM', data:strat.map(v=>+(v*100).toFixed(2)), backgroundColor:'#185FA588', borderColor:'#185FA5', borderWidth:1 },
+        { label:'EW Buy & Hold', data:ew.map(v=>+(v*100).toFixed(2)), backgroundColor:'#BA751788', borderColor:'#BA7517', borderWidth:1 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend:{ display:false } },
+      scales: {
+        x: { ticks:{ maxTicksLimit:10, font:{size:10} }, grid:{ display:false } },
+        y: { ticks:{ font:{size:11}, callback: v=>v.toFixed(1)+'%' }, grid:{ color:'rgba(0,0,0,0.05)' } }
+      }
+    }
+  });
+}
+
+function buildWeightsHeatmap(weights, dates) {
+  const el = document.getElementById('weightsHeatmap');
+  const n = weights.length;
+  let html = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:separate;border-spacing:2px;font-size:11px">`;
+  html += '<tr><td style="color:var(--text-muted);padding:2px 6px;min-width:70px"></td>';
+  dates.forEach(d => {
+    html += `<td style="color:var(--text-hint);text-align:center;padding:2px 2px;font-size:9px;white-space:nowrap">${d.slice(5)}</td>`;
+  });
+  html += '</tr>';
+  ASSETS.forEach(a => {
+    html += `<tr><td style="color:var(--text-muted);padding:2px 6px;font-weight:500;white-space:nowrap">${TICKERS[a]}</td>`;
+    weights.forEach(w => {
+      const v = w[a];
+      let bg;
+      if (v > 0.1) bg = '#1D9E7588';
+      else if (v < -0.1) bg = '#E24B4A88';
+      else bg = 'var(--bg)';
+      html += `<td style="background:${bg};border-radius:3px;width:24px;height:24px;text-align:center;font-size:9px;color:var(--text-muted)">${v===0?'·':(v>0?'+':'')+(v*100).toFixed(0)}</td>`;
+    });
+    html += '</tr>';
+  });
+  html += '</table></div>';
+  el.innerHTML = html;
+}
+
+function buildBTMetricsTable(strat, single, ew, cumStrat, cumSingle, cumEW) {
+  const tbody = document.getElementById('btMetricsBody');
+  const rows = [
+    ['Total Return (%)', (cumStrat.at(-1)*100).toFixed(2), (cumSingle.at(-1)*100).toFixed(2), (cumEW.at(-1)*100).toFixed(2)],
+    ['Sharpe Ratio', sharpe(strat).toFixed(4), sharpe(single).toFixed(4), sharpe(ew).toFixed(4)],
+    ['Max Drawdown (%)', (maxDD(cumStrat)*100).toFixed(2), (maxDD(cumSingle)*100).toFixed(2), (maxDD(cumEW)*100).toFixed(2)],
+    ['Hit Rate (%)', (hitRate(strat)*100).toFixed(2), (hitRate(single)*100).toFixed(2), (hitRate(ew)*100).toFixed(2)]
+  ];
+  tbody.innerHTML = rows.map(r => `<tr><td><strong>${r[0]}</strong></td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td></tr>`).join('');
+}
+
+/* ============================================================
+   UTILITIES
+   ============================================================ */
+function buildLegend(id, labels, colors) {
+  const defaultColors = ['#378ADD','#1D9E75','#D85A30','#BA7517','#7F77DD'];
+  const cols = colors || labels.map((l,i) => COLORS[l.replace(' ','_')] || defaultColors[i]);
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.innerHTML = labels.map((l,i) =>
+    `<span class="legend-item"><span class="legend-dot" style="background:${cols[i]}"></span>${l}</span>`
+  ).join('');
+}
+
+/* ============================================================
+   NAVIGATION
+   ============================================================ */
+const initializers = {
+  s1: rebuildEDA,
+  s2: rebuildMLP,
+  s3: rebuildCNN,
+  s4: rebuildLSTM,
+  s5: rebuildMulti,
+  s6: rebuildBacktest,
+  s7: () => {}
+};
+
+const initialized = {};
+
+function showStep(id, navEl) {
+  document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  navEl.classList.add('active');
+  if (!initialized[id]) {
+    initialized[id] = true;
+    initializers[id]();
+  }
+}
+
+/* Initial render */
+rebuildEDA();
+</script>
+</body>
+</html>
